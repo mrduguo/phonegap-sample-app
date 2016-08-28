@@ -1,4 +1,9 @@
-# Hello World PhoneGap Template [![bitHound Score][bithound-img]][bithound-url]
+# Install for Android and Windows Phone
+
+https://build.phonegap.com/apps/2235773/share
+
+
+# Hello World PhoneGap Template
 
 A PhoneGap Hello World template
 
