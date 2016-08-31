@@ -1,139 +1,139 @@
-(function(){
+function onAppLoaded (errorMessage) {
+  window.BOOTSTRAP_OK = true;
+  var loader = document.getElementById('loader-wrapper');
+  if (loader) {
+    var loadTime = Date.now() - window.StartTime;
+    var minimalSpinnerTime = 5000;
+    if (loadTime < minimalSpinnerTime) {
+      setTimeout(function () {
+        loader.parentElement.removeChild(loader);
+      }, (minimalSpinnerTime - loadTime));
+    } else {
+      loader.parentElement.removeChild(loader);
+    }
+
+    if (errorMessage) {
+      console.log('errorMessage:');
+      console.log(errorMessage);
+      document.getElementById('app').innerHTML =
+        '<div class="loader-error"><div class="title">ERROR CODE: ' + errorMessage.code + '</div>' +
+        '<div class="message">ERROR MESSAGE:' + errorMessage.message + '</div></div>'
+      ;
+    }
+  }
+};
+
+(function () {
 // Retrieved and slightly modified from: https://github.com/typicode/pegasus
 // --------------------------------------------------------------------------
 //
 // a   url (naming it a, beacause it will be reused to store callbacks)
 // xhr placeholder to avoid using var, not to be used
-window.pegasus = function pegasus(a, xhr) {
-  xhr = new XMLHttpRequest();
+  window.pegasus = function pegasus (a, xhr) {
+    xhr = new XMLHttpRequest();
 
-  // Open url
-  xhr.open('GET', a);
+    // Open url
+    xhr.open('GET', a);
 
-  // Reuse a to store callbacks
-  a = [];
+    // Reuse a to store callbacks
+    a = [];
 
-  // onSuccess handler
-  // onError   handler
-  // cb        placeholder to avoid using var, should not be used
-  xhr.onreadystatechange = xhr.then = function(onSuccess, onError, cb, result) {
+    // onSuccess handler
+    // onError   handler
+    // cb        placeholder to avoid using var, should not be used
+    xhr.onreadystatechange = xhr.then = function (onSuccess, onError, cb, result) {
 
-    // Test if onSuccess is a function or a load event
-    if (onSuccess.call) a = [onSuccess, onError];
+      // Test if onSuccess is a function or a load event
+      if (onSuccess.call) a = [onSuccess, onError];
 
-    // Test if request is complete
-    if (xhr.readyState == 4) {
+      // Test if request is complete
+      if (xhr.readyState == 4) {
 
-      try {
-        if(xhr.status === 200 || xhr.status === 0){
-          result = JSON.parse(xhr.responseText);
-          cb = a[0];
-        } else {
-          result = new Error('Status: '+xhr.status);
+        try {
+          if (xhr.status === 200 || xhr.status === 0) {
+            result = JSON.parse(xhr.responseText);
+            cb = a[0];
+          } else {
+            result = new Error('Status: ' + xhr.status);
+            cb = a[1];
+          }
+        } catch (e) {
+          result = e;
           cb = a[1];
         }
-      } catch(e) {
-        result = e;
-        cb = a[1];
+
+        // Safari doesn't support xhr.responseType = 'json'
+        // so the response is parsed
+        if (cb) cb(result);
       }
+    };
 
-      // Safari doesn't support xhr.responseType = 'json'
-      // so the response is parsed
-      if (cb) cb(result);
-    }
+    // Send
+    xhr.send();
+
+    // Return request
+    return xhr;
   };
-
-  // Send
-  xhr.send();
-
-  // Return request
-  return xhr;
-};
 //------------------------------------------------------------------
 // Step 2: After fetching manifest (localStorage or XHR), load it
-function loadManifest(manifest,fromLocalStorage,timeout){
-  // Safety timeout. If BOOTSTRAP_OK is not defined,
-  // it will delete the 'localStorage' version and revert to factory settings.
-  if(fromLocalStorage){
-    setTimeout(function(){
-      if(!window.BOOTSTRAP_OK){
-        console.warn('BOOTSTRAP_OK !== true; Resetting to original manifest.json...');
-        localStorage.removeItem('manifest');
-        location.reload();
-      }
-    },timeout);
-  }
+  function loadManifest (manifest) {
+    window.Manifest = manifest;
+    if (!manifest.load) {
+      onAppLoaded({'code': 'ERR002', 'message': 'Manifest has nothing to load (manifest.load is empty).'});
+      return;
+    }
 
-  if(!manifest.load) {
-    console.error('Manifest has nothing to load (manifest.load is empty).',manifest);
-    return;
-  }
-
-  var el,
+    var el,
       head = document.getElementsByTagName('head')[0],
-      scripts = manifest.load.concat(),
-      now = Date.now();
+      scripts = manifest.load.concat();
 
-  // Load Scripts
-  function loadScripts(){
-    scripts.forEach(function(src) {
-      if(!src) return;
-      // Ensure the 'src' has no '/' (it's in the root already)
-      if(src[0] === '/') src = src.substr(1);
-      src = manifest.root + src ;
-      // Load javascript
-      if(src.substr(-3) === ".js"){
-        el= document.createElement('script');
-        el.charset="UTF-8";
-        el.type= 'text/javascript';
-        el.src= src + '?' + now;
-        el.async = false;
-      // Load CSS
-      } else {
-        el= document.createElement('link');
-        el.rel = "stylesheet";
-        el.href = src + '?' + now;
-        el.type = "text/css";
-      }
-      head.appendChild(el);
-    });
+    // Load Scripts
+    function loadScripts () {
+      scripts.forEach(function (src) {
+        if (!src) return;
+        // Ensure the 'src' has no '/' (it's in the root already)
+        if (src[0] === '/') src = src.substr(1);
+        src = manifest.root + src;
+        // Load javascript
+        if (src.substr(-3) === ".js") {
+          el = document.createElement('script');
+          el.charset = "UTF-8";
+          el.type = 'text/javascript';
+          el.src = src + '?v=' + manifest.version;
+          el.async = false;
+          // Load CSS
+        } else {
+          el = document.createElement('link');
+          el.rel = "stylesheet";
+          el.href = src + '?' + manifest.version;
+          el.type = "text/css";
+        }
+        head.appendChild(el);
+      });
+    }
+
+    //---------------------------------------------------
+    // Step 3: Ensure the 'root' end with a '/'
+    manifest.root = manifest.root || './';
+    if (manifest.root.length > 0 && manifest.root[manifest.root.length - 1] !== '/')
+      manifest.root += '/';
+
+    if (typeof window.cordova !== 'undefined') {
+      document.addEventListener("deviceready", loadScripts, false);
+    } else {
+      loadScripts();
+    }
+    // Save to global scope
   }
 
-  //---------------------------------------------------
-  // Step 3: Ensure the 'root' end with a '/'
-  manifest.root = manifest.root || './';
-  if(manifest.root.length > 0 && manifest.root[manifest.root.length-1] !== '/')
-    manifest.root += '/';
-
-  // Step 4: Save manifest for next time
-  if(!fromLocalStorage) 
-    localStorage.setItem('manifest',JSON.stringify(manifest));
-
-  // Step 5: Load Scripts
-  // If we're loading Cordova files, make sure Cordova is ready first!
-  if(typeof window.cordova !== 'undefined'){
-    document.addEventListener("deviceready", loadScripts, false);
-  } else {
-    loadScripts();
-  }
-  // Save to global scope
-  window.Manifest = manifest;
-}
 //---------------------------------------------------------------------
-window.Manifest = {};
-// Step 1: Load manifest from localStorage
-var manifest = JSON.parse(localStorage.getItem('manifest'));
-// grab manifest.json location from <script manifest="..."></script>
-var s = document.querySelector('script[manifest]');
-// Not in localStorage? Fetch it!
-if(!manifest){
-  var url = (s? s.getAttribute('server')+s.getAttribute('manifest'): null) || 'manifest.json';
-  // get manifest.json, then loadManifest.
-  pegasus(url).then(loadManifest,function(xhr){
-    console.error('Could not download '+url+': '+xhr.status);
+  window.bootstrapLoadManifest = function (source, callback, onError) {
+    var url = document.querySelector('script[manifest]').getAttribute('manifest');
+    pegasus(url + '?s=' + source + '&s=' + Date.now()).then(callback, onError);
+  };
+
+  window.StartTime = Date.now();
+  bootstrapLoadManifest('onload', loadManifest, function (xhr) {
+    onAppLoaded({'code': 'ERR001', 'message': 'Could not download ' + url + ': ' + xhr.status});
   });
-// Manifest was in localStorage. Load it immediatly.
-} else {
-  loadManifest(manifest,true,s.getAttribute('timeout') || 10000);
-}
 })();
