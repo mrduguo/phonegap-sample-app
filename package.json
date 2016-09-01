@@ -1,4 +1,15 @@
 {
+  "scripts": {
+    "build": "phonegap info",
+    "run": "phonegap app",
+    "ios": "phonegap run ios"
+  },
+  "engines": {
+    "node": "6.5.0"
+  },
+  "devDependencies": {
+    "phonegap": "6.3.0"
+  },
   "name": "phonegap-template-hello-world",
   "version": "4.0.2",
   "description": "> A Hello World template built with PhoneGap",

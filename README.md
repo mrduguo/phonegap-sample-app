@@ -7,7 +7,14 @@ https://build.phonegap.com/apps/2235773/share
 
     npm install -g phonegap
 
+> Optional for windows user only!
+> Mac/Linux user can use gradle build system which handle all nodejs related installation and setup.
+
 # Run App
+
+    ./gradlew run
+
+Or
 
     phonegap app
 
@@ -16,6 +23,10 @@ https://build.phonegap.com/apps/2235773/share
 > * [PhoneGap Developer App](http://docs.phonegap.com/getting-started/2-install-mobile-app/) 
 
 # Run iOS
+
+    ./gradlew npm_run_ios
+
+Or
 
     phonegap run ios
 
