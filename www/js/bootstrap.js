@@ -89,34 +89,30 @@ function onAppLoaded (errorMessage) {
 
     // Load Scripts
     function loadScripts () {
+      var rootPath=document.querySelector('script[manifest]').getAttribute('root');
+      if(!rootPath){
+        rootPath='';
+      }
       scripts.forEach(function (src) {
         if (!src) return;
-        // Ensure the 'src' has no '/' (it's in the root already)
-        if (src[0] === '/') src = src.substr(1);
-        src = manifest.root + src;
-        // Load javascript
-        if (src.substr(-3) === ".js") {
+        var href=src.startsWith('http')?src:rootPath+src;
+        if (/\/css|\.css/.test(src)) {
+          // Load CSS
+          el = document.createElement('link');
+          el.rel = "stylesheet";
+          el.href = href;
+          el.type = "text/css";
+        } else {
+          // Load javascript
           el = document.createElement('script');
           el.charset = "UTF-8";
           el.type = 'text/javascript';
-          el.src = src + '?v=' + manifest.version;
+          el.src = href;
           el.async = false;
-          // Load CSS
-        } else {
-          el = document.createElement('link');
-          el.rel = "stylesheet";
-          el.href = src + '?' + manifest.version;
-          el.type = "text/css";
         }
         head.appendChild(el);
       });
     }
-
-    //---------------------------------------------------
-    // Step 3: Ensure the 'root' end with a '/'
-    manifest.root = manifest.root || './';
-    if (manifest.root.length > 0 && manifest.root[manifest.root.length - 1] !== '/')
-      manifest.root += '/';
 
     if (typeof window.cordova !== 'undefined') {
       document.addEventListener("deviceready", loadScripts, false);
@@ -128,7 +124,12 @@ function onAppLoaded (errorMessage) {
 
 //---------------------------------------------------------------------
   window.bootstrapLoadManifest = function (source, callback, onError) {
-    var url = document.querySelector('script[manifest]').getAttribute('manifest');
+    var script = document.querySelector('script[manifest]');
+    var pathRoot = script.getAttribute('root');
+    if(!pathRoot){
+      pathRoot='';
+    }
+    var url = pathRoot+script.getAttribute('manifest');
     pegasus(url + '?s=' + source + '&s=' + Date.now()).then(callback, onError);
   };
 

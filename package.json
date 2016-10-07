@@ -8,7 +8,7 @@
     "node": "6.5.0"
   },
   "devDependencies": {
-    "phonegap": "6.3.0"
+    "phonegap": "6.3.3"
   },
   "name": "phonegap-template-hello-world",
   "version": "4.0.2",
